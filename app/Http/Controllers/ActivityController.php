@@ -2,67 +2,85 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreActivityRequest;
+use App\Http\Requests\UpdateActivityRequest;
 use App\Models\Activity;
 use App\Models\ActivityUpdate;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ActivityController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
-        return response()->json(Activity::with(['createdBy','updates.user'])->get());
-    }
-
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
+        return Inertia::render('Activities/Index', [
+            'activities' => Activity::query()
+                ->with(['createdBy', 'updates.user'])
+                ->latest()
+                ->get(),
         ]);
-
-        $activity = Activity::create(array_merge($data, ['created_by' => Auth::id()]));
-
-        return response()->json($activity, 201);
     }
 
-    public function show(Activity $activity)
+    public function store(StoreActivityRequest $request): RedirectResponse
     {
-        $activity->load(['createdBy','updates.user']);
-        return response()->json($activity);
+        Activity::create(array_merge($request->validated(), ['created_by' => $request->user()->id]));
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Activity created.')]);
+
+        return to_route('activities.index');
     }
 
-    public function update(Request $request, Activity $activity)
+    public function show(Activity $activity): Response
     {
-        $data = $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'description' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
+        $activity->load(['createdBy', 'updates.user']);
+
+        return Inertia::render('Activities/Show', [
+            'activity' => $activity,
         ]);
-
-        $activity->update($data);
-
-        return response()->json($activity);
     }
 
-    public function destroy(Activity $activity)
+    public function update(UpdateActivityRequest $request, Activity $activity): RedirectResponse
+    {
+        $activity->update($request->validated());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Activity updated.')]);
+
+        return to_route('activities.show', $activity);
+    }
+
+    public function destroy(Activity $activity): RedirectResponse
     {
         $activity->delete();
-        return response()->json(null, 204);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Activity deleted.')]);
+
+        return to_route('activities.index');
     }
 
-    public function report(Request $request)
+    public function report(Request $request): Response
     {
-        $data = $request->validate([
-            'start' => 'required|date',
-            'end' => 'required|date',
+        $validated = $request->validate([
+            'start' => 'nullable|date',
+            'end' => 'nullable|date|after_or_equal:start',
         ]);
 
-        $rows = ActivityUpdate::with(['activity','user'])
-            ->whereBetween('updated_for_date', [$data['start'], $data['end']])
-            ->orderBy('updated_for_date')
+        $start = $validated['start'] ?? now()->startOfMonth()->toDateString();
+        $end = $validated['end'] ?? now()->toDateString();
+
+        $updates = ActivityUpdate::with(['activity', 'user'])
+            ->whereDate('updated_for_date', '>=', $start)
+            ->whereDate('updated_for_date', '<=', $end)
+            ->orderByDesc('updated_for_date')
+            ->orderByDesc('created_at')
             ->get();
 
-        return response()->json($rows);
+        return Inertia::render('Activities/Reports', [
+            'start' => $start,
+            'end' => $end,
+            'updates' => $updates,
+        ]);
     }
 }
+
