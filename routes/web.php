@@ -32,4 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports/activities', [ActivityController::class, 'report'])->name('activities.reports');
 });
 
+// health check for containers / load balancers
+Route::get('/healthz', fn () => response()->json(['status' => 'ok'], 200));
+
 require __DIR__.'/settings.php';
