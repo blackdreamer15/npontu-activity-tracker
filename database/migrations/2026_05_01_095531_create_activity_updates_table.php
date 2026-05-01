@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('activity_updates', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('activity_id')->constrained('activities')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->enum('status', ['done', 'pending']);
+            $table->text('remark')->nullable();
+            $table->date('updated_for_date');
             $table->timestamps();
         });
     }
