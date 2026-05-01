@@ -21,6 +21,6 @@ class Activity extends Model
 
     public function updates(): HasMany
     {
-        return $this->hasMany(ActivityUpdate::class);
+        return $this->hasMany(ActivityUpdate::class)->latest();
     }
 }
