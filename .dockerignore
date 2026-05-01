@@ -1,0 +1,17 @@
+/vendor
+/node_modules
+/.env
+/.env.*
+/.idea
+/.vscode
+/storage/*.key
+/public/hot
+/public/storage
+/.DS_Store
+/docker-compose.yml
+/docker-compose.prod.yml
+/.agents
+/tests
+/workflows
+/README.md
+.DS_Store
