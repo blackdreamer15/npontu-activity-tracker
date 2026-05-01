@@ -2,38 +2,45 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreActivityUpdateRequest;
+use App\Models\Activity;
 use App\Models\ActivityUpdate;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ActivityUpdateController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
-        $date = $request->query('date') ?? now()->toDateString();
+        $date = $request->query('date') ?: now()->toDateString();
 
-        $rows = ActivityUpdate::with(['activity','user'])
-            ->where('updated_for_date', $date)
-            ->orderBy('created_at', 'desc')
+        $updates = ActivityUpdate::with(['activity', 'user'])
+            ->whereDate('updated_for_date', $date)
+            ->orderByDesc('updated_for_date')
+            ->orderByDesc('created_at')
             ->get();
 
-        return response()->json($rows);
+        return Inertia::render('Activities/History', [
+            'date' => $date,
+            'updates' => $updates,
+        ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreActivityUpdateRequest $request, Activity $activity): RedirectResponse
     {
-        $data = $request->validate([
-            'activity_id' => 'required|exists:activities,id',
-            'status' => 'required|in:done,pending',
-            'remark' => 'nullable|string',
-            'updated_for_date' => 'nullable|date',
+        $validated = $request->validated();
+
+        $activity->updates()->create([
+            'user_id' => $request->user()->id,
+            'status' => $validated['status'],
+            'remark' => $validated['remark'] ?? null,
+            'updated_for_date' => $validated['updated_for_date'],
         ]);
 
-        $row = ActivityUpdate::create(array_merge($data, [
-            'user_id' => Auth::id(),
-            'updated_for_date' => $data['updated_for_date'] ?? now()->toDateString(),
-        ]));
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Activity update saved.')]);
 
-        return response()->json($row, 201);
+        return to_route('activities.show', $activity);
     }
 }
