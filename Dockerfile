@@ -81,7 +81,8 @@ COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 RUN mkdir -p storage/framework/{cache,sessions,testing,views} storage/logs bootstrap/cache \
-    && chown -R appuser:app storage bootstrap/cache
+    && chown -R appuser:app storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
 USER appuser
 
