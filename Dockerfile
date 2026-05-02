@@ -87,7 +87,7 @@ RUN mkdir -p storage/framework/{cache,sessions,testing,views} storage/logs boots
 USER appuser
 
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD php -r '$conn=@fsockopen("127.0.0.1", 8080); if (!$conn) { exit(1); } fclose($conn);'
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD php -r '$port = getenv("PORT") ?: "8080"; $conn=@fsockopen("127.0.0.1", $port); if (!$conn) { exit(1); } fclose($conn);'
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
+CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
