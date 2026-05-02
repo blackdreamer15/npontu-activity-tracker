@@ -12,9 +12,18 @@ use Inertia\Response;
 
 class ActivityUpdateController extends Controller
 {
+    /**
+     * Resolve "today" in the user's local timezone.
+     */
+    private function today(): string
+    {
+        return now()->toDateString();
+    }
+
     public function index(Request $request): Response
     {
-        $date = $request->query('date') ?: now()->toDateString();
+        $today = $this->today();
+        $date = $request->query('date') ?: $today;
         $search = $request->query('search');
         $status = $request->query('status');
 
@@ -31,7 +40,7 @@ class ActivityUpdateController extends Controller
                 $query->where('status', $status);
             })
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(10);
 
         return Inertia::render('Activities/History', [
             'date' => $date,

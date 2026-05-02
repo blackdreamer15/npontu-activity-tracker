@@ -10,10 +10,17 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function show(): Response
+    /**
+     * Resolve "today" in the user's local timezone.
+     */
+    private function today(): string
     {
-        $today = now()->toDateString();
-        $sevenDaysAgo = now()->subDays(7)->toDateString();
+        return now()->toDateString();
+    }
+
+    public function show(Request $request): Response
+    {
+        $today = $this->today();
 
         // Get all activities with recent updates
         $activities = Activity::query()
@@ -26,7 +33,7 @@ class DashboardController extends Controller
             ->with(['activity', 'user'])
             ->whereDate('updated_for_date', $today)
             ->orderByDesc('created_at')
-            ->limit(6)
+            ->limit(5)
             ->get();
 
         // Metrics
@@ -40,10 +47,12 @@ class DashboardController extends Controller
         // Chart data: Daily activity volume (last 7 days)
         $dailyVolume = [];
         for ($i = 6; $i >= 0; $i--) {
-            $date = now()->subDays($i)->toDateString();
-            $count = ActivityUpdate::whereDate('updated_for_date', $date)->count();
+            $dateObj = now()->subDays($i);
+            $dateStr = $dateObj->toDateString();
+            $count = ActivityUpdate::whereDate('updated_for_date', $dateStr)->count();
+            
             $dailyVolume[] = [
-                'date' => now()->subDays($i)->format('M d'),
+                'date' => $dateObj->format('M d'),
                 'updates' => $count,
             ];
         }
@@ -51,14 +60,16 @@ class DashboardController extends Controller
         // Chart data: Completion rate trend (last 7 days)
         $completionTrend = [];
         for ($i = 6; $i >= 0; $i--) {
-            $date = now()->subDays($i)->toDateString();
-            $total = ActivityUpdate::whereDate('updated_for_date', $date)->count();
-            $done = ActivityUpdate::whereDate('updated_for_date', $date)
+            $dateObj = now()->subDays($i);
+            $dateStr = $dateObj->toDateString();
+            $total = ActivityUpdate::whereDate('updated_for_date', $dateStr)->count();
+            $done = ActivityUpdate::whereDate('updated_for_date', $dateStr)
                 ->where('status', 'done')
                 ->count();
             $rate = $total > 0 ? round(($done / $total) * 100) : 0;
+            
             $completionTrend[] = [
-                'date' => now()->subDays($i)->format('M d'),
+                'date' => $dateObj->format('M d'),
                 'completed' => $rate,
             ];
         }

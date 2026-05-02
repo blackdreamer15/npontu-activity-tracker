@@ -13,16 +13,25 @@ use Inertia\Response;
 
 class ActivityController extends Controller
 {
+    /**
+     * Resolve "today" in the user's local timezone.
+     */
+    private function today(): string
+    {
+        return now()->toDateString();
+    }
+
     public function index(Request $request): Response
     {
-        $search = $request->input('search');
+        $search    = $request->input('search');
         $lifecycle = $request->input('lifecycle');
-        $status = $request->input('status');
+        $status    = $request->input('status');
+        $today     = $this->today();
 
         $activities = Activity::query()
             ->with(['createdBy', 'latestUpdate.user'])
-            ->withCount(['updates' => function ($query) {
-                $query->whereDate('updated_for_date', now()->toDateString())
+            ->withCount(['updates as today_done_count' => function ($query) use ($today) {
+                $query->whereDate('updated_for_date', $today)
                     ->where('status', 'done');
             }])
             ->when($search, function ($query, $search) {
@@ -35,41 +44,34 @@ class ActivityController extends Controller
                 if ($lifecycle === 'active') $query->where('is_active', true);
                 if ($lifecycle === 'inactive') $query->where('is_active', false);
             })
-            ->when($status, function ($query, $status) {
+            ->when($status, function ($query, $status) use ($today) {
                 if ($status === 'done') {
-                    $query->whereHas('updates', function ($q) {
-                        $q->whereDate('updated_for_date', now()->toDateString())
-                            ->where('status', 'done');
+                    $query->whereHas('updates', function ($q) use ($today) {
+                        $q->whereDate('updated_for_date', $today)->where('status', 'done');
                     });
                 } elseif ($status === 'pending') {
-                    $query->where(function ($q) {
-                        $q->whereDoesntHave('updates', function ($sq) {
-                            $sq->whereDate('updated_for_date', now()->toDateString());
-                        })->orWhereHas('updates', function ($sq) {
-                            $sq->whereDate('updated_for_date', now()->toDateString())
-                                ->where('status', 'pending');
+                    $query->where(function ($q) use ($today) {
+                        $q->whereDoesntHave('updates', function ($sq) use ($today) {
+                            $sq->whereDate('updated_for_date', $today);
+                        })->orWhereHas('updates', function ($sq) use ($today) {
+                            $sq->whereDate('updated_for_date', $today)->where('status', 'pending');
                         });
                     });
                 }
             })
             ->latest()
-            ->get()
-            ->map(function ($activity) {
-                // Determine today's status manually for the badge
-                $todayUpdate = $activity->updates()
-                    ->whereDate('updated_for_date', now()->toDateString())
-                    ->first();
-                
-                $activity->today_status = $todayUpdate ? $todayUpdate->status : 'pending';
+            ->paginate(10)
+            ->through(function ($activity) {
+                $activity->today_status = $activity->today_done_count > 0 ? 'done' : 'pending';
                 return $activity;
             });
 
         return Inertia::render('Activities/Index', [
             'activities' => $activities,
-            'filters' => [
-                'search' => $search,
+            'filters'    => [
+                'search'    => $search,
                 'lifecycle' => $lifecycle,
-                'status' => $status,
+                'status'    => $status,
             ],
         ]);
     }
@@ -113,18 +115,19 @@ class ActivityController extends Controller
     public function report(Request $request): Response
     {
         $validated = $request->validate([
-            'start' => 'nullable|date',
-            'end' => 'nullable|date|after_or_equal:start',
+            'start'  => 'nullable|date',
+            'end'    => 'nullable|date|after_or_equal:start',
             'search' => 'nullable|string',
             'status' => 'nullable|string',
         ]);
 
-        $start = $validated['start'] ?? now()->startOfMonth()->toDateString();
-        $end = $validated['end'] ?? now()->toDateString();
+        $today  = $this->today();
+        $start  = $validated['start'] ?? now()->startOfMonth()->toDateString();
+        $end    = $validated['end'] ?? $today;
         $search = $validated['search'] ?? null;
         $status = $validated['status'] ?? null;
 
-        $updates = ActivityUpdate::with(['activity', 'user'])
+        $query = ActivityUpdate::with(['activity', 'user'])
             ->whereDate('updated_for_date', '>=', $start)
             ->whereDate('updated_for_date', '<=', $end)
             ->when($search, function ($query, $search) {
@@ -136,15 +139,21 @@ class ActivityController extends Controller
             })
             ->when($status, function ($query, $status) {
                 $query->where('status', $status);
-            })
-            ->orderByDesc('updated_for_date')
+            });
+
+        $doneCount = (clone $query)->where('status', 'done')->count();
+        $pendingCount = (clone $query)->where('status', 'pending')->count();
+
+        $updates = $query->orderByDesc('updated_for_date')
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(10);
 
         return Inertia::render('Activities/Reports', [
-            'start' => $start,
-            'end' => $end,
+            'start'   => $start,
+            'end'     => $end,
             'updates' => $updates,
+            'done_count' => $doneCount,
+            'pending_count' => $pendingCount,
             'filters' => [
                 'search' => $search,
                 'status' => $status,
@@ -152,4 +161,3 @@ class ActivityController extends Controller
         ]);
     }
 }
-
