@@ -1,10 +1,14 @@
 # Activity Tracker
 
-A high-performance Laravel + Inertia + React application designed for tracking daily team activities, status updates, and enterprise-level reporting. This repository contains the application used to meet the assessment requirements for daily activity tracking and hand-over management.
+A high-performance Laravel + Inertia + React application designed for tracking daily team activities, status updates, and enterprise-level reporting.
 
-## ✅ Assessment Requirements Mapping
+## 🌐 Live Demo
 
-This application implements the assessment requirements:
+**[View the live application →](https://npontu-activity-tracker.onrender.com/)**
+
+Demo credentials available upon request.
+
+## ✅ Features
 
 1.  **Activity Definition**: Allows full CRUD management of daily tasks (e.g., "Daily SMS count monitoring").
 2.  **Status Tracking**: Enables personnel to toggle activity status between **Done** and **Pending** with optional remarks.
