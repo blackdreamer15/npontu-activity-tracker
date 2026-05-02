@@ -1,7 +1,9 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import InputError from '@/components/atoms/input-error-inline';
-import { Badge } from '@/components/ui/badge';
+import { ActivityUpdateDialog } from '@/components/molecules/activity-update-dialog';
+import StatusBadge from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -13,12 +15,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import UserAvatar from '@/components/user-avatar';
 
 type ActivityUpdate = {
     id: number;
@@ -26,7 +30,7 @@ type ActivityUpdate = {
     remark?: string | null;
     updated_for_date: string;
     created_at: string;
-    user: { id: number; name: string };
+    user: { id: number; name: string; role_title?: string | null };
 };
 
 type Activity = {
@@ -39,8 +43,6 @@ type Activity = {
     updates: ActivityUpdate[];
 };
 
-const today = new Date().toISOString().slice(0, 10);
-
 export default function ActivityShow({ activity }: { activity: Activity }) {
     const activityForm = useForm({
         title: activity.title,
@@ -48,24 +50,10 @@ export default function ActivityShow({ activity }: { activity: Activity }) {
         is_active: activity.is_active,
     });
 
-    const updateForm = useForm({
-        status: 'pending' as 'done' | 'pending',
-        remark: '',
-        updated_for_date: today,
-    });
-
     const submitActivity = (e: FormEvent) => {
         e.preventDefault();
         activityForm.put(`/activities/${activity.id}`, {
             preserveScroll: true,
-        });
-    };
-
-    const submitUpdate = (e: FormEvent) => {
-        e.preventDefault();
-        updateForm.post(`/activities/${activity.id}/updates`, {
-            preserveScroll: true,
-            onSuccess: () => updateForm.reset('remark', 'status'),
         });
     };
 
@@ -79,326 +67,281 @@ export default function ActivityShow({ activity }: { activity: Activity }) {
         router.delete(`/activities/${activity.id}`, { preserveScroll: true });
     };
 
+    const formatDateTime = (dateString: string) => {
+        return new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+        }).format(new Date(dateString));
+    };
+
+    const formatDate = (dateString: string) => {
+        return new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+        }).format(new Date(dateString));
+    };
+
     return (
         <>
             <Head title={activity.title} />
             <div className="space-y-6 p-4">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <p className="text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Link
                                 href="/activities"
-                                className="underline hover:text-foreground"
+                                className="flex items-center gap-1 underline hover:text-foreground"
                             >
+                                <ArrowLeft className="h-3 w-3" />
                                 Activities
-                            </Link>{' '}
-                            / Manage
-                        </p>
-                        <h1 className="text-3xl font-bold tracking-tight">
+                            </Link>
+                            <span>/</span>
+                            <span>Manage</span>
+                        </div>
+                        <h1 className="mt-2 text-3xl font-bold tracking-tight">
                             {activity.title}
                         </h1>
-                        {activity.description ? (
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                {activity.description}
-                            </p>
-                        ) : null}
-                    </div>
-                    <div className="flex flex-wrap justify-end gap-2">
-                        <Button asChild variant="outline" size="sm">
-                            <Link href="/activities/history">
-                                Daily History
-                            </Link>
-                        </Button>
-                        <Button asChild variant="outline" size="sm">
-                            <Link href="/reports/activities">Reports</Link>
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={removeActivity}
-                            size="sm"
-                        >
-                            Delete
-                        </Button>
                     </div>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Edit activity</CardTitle>
-                            <CardDescription>
-                                Update the activity title, description, or
-                                active state.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form
-                                className="space-y-4"
-                                onSubmit={submitActivity}
-                            >
-                                <div className="space-y-2">
-                                    <Label htmlFor="title">Title *</Label>
-                                    <Input
-                                        id="title"
-                                        value={activityForm.data.title}
-                                        onChange={(e) =>
-                                            activityForm.setData(
-                                                'title',
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="Enter activity title"
-                                        className={
-                                            activityForm.errors.title
-                                                ? 'border-destructive'
-                                                : ''
-                                        }
-                                        disabled={activityForm.processing}
-                                    />
-                                    {activityForm.errors.title && (
-                                        <InputError
-                                            message={activityForm.errors.title}
-                                        />
-                                    )}
+                <div className="grid gap-6 lg:grid-cols-3">
+                    {/* Main Content: History Table */}
+                    <div className="space-y-6 lg:col-span-2">
+                        <div className="rounded-md border bg-card shadow-sm">
+                            <div className="flex items-center justify-between border-b px-6 py-4">
+                                <div>
+                                    <h3 className="leading-none font-semibold tracking-tight">
+                                        Update History
+                                    </h3>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        Historical records for this activity.
+                                    </p>
                                 </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="description">
-                                        Description
-                                    </Label>
-                                    <textarea
-                                        id="description"
-                                        rows={4}
-                                        placeholder="Describe what this activity checks"
-                                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                        value={activityForm.data.description}
-                                        onChange={(e) =>
-                                            activityForm.setData(
-                                                'description',
-                                                e.target.value,
-                                            )
-                                        }
-                                        disabled={activityForm.processing}
-                                    />
-                                    {activityForm.errors.description && (
-                                        <InputError
-                                            message={
-                                                activityForm.errors.description
-                                            }
-                                        />
-                                    )}
-                                </div>
-
-                                <label className="flex cursor-pointer items-center gap-3 text-sm font-medium hover:opacity-80">
-                                    <input
-                                        type="checkbox"
-                                        checked={activityForm.data.is_active}
-                                        onChange={(e) =>
-                                            activityForm.setData(
-                                                'is_active',
-                                                e.target.checked,
-                                            )
-                                        }
-                                        disabled={activityForm.processing}
-                                        className="cursor-pointer"
-                                    />
-                                    <span>Active</span>
-                                </label>
-
-                                <Button
-                                    type="submit"
-                                    disabled={activityForm.processing}
-                                    className="w-full"
-                                >
-                                    {activityForm.processing
-                                        ? 'Saving…'
-                                        : 'Save changes'}
-                                </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Add activity update</CardTitle>
-                            <CardDescription>
-                                Record the current status, remark, and handover
-                                date.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form className="space-y-4" onSubmit={submitUpdate}>
-                                <div className="space-y-2">
-                                    <Label htmlFor="status">Status *</Label>
-                                    <Select
-                                        value={updateForm.data.status}
-                                        onValueChange={(value) =>
-                                            updateForm.setData(
-                                                'status',
-                                                value as 'done' | 'pending',
-                                            )
-                                        }
-                                        disabled={updateForm.processing}
-                                    >
-                                        <SelectTrigger
-                                            id="status"
-                                            className={
-                                                updateForm.errors.status
-                                                    ? 'border-destructive'
-                                                    : ''
-                                            }
-                                        >
-                                            <SelectValue placeholder="Select a status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="pending">
-                                                Pending
-                                            </SelectItem>
-                                            <SelectItem value="done">
-                                                Done
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    {updateForm.errors.status && (
-                                        <InputError
-                                            message={updateForm.errors.status}
-                                        />
-                                    )}
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="remark">Remark</Label>
-                                    <textarea
-                                        id="remark"
-                                        rows={4}
-                                        placeholder="Add a clear note for handover"
-                                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                        value={updateForm.data.remark}
-                                        onChange={(e) =>
-                                            updateForm.setData(
-                                                'remark',
-                                                e.target.value,
-                                            )
-                                        }
-                                        disabled={updateForm.processing}
-                                    />
-                                    {updateForm.errors.remark && (
-                                        <InputError
-                                            message={updateForm.errors.remark}
-                                        />
-                                    )}
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="updated_for_date">
-                                        Updated for date *
-                                    </Label>
-                                    <Input
-                                        id="updated_for_date"
-                                        type="date"
-                                        value={updateForm.data.updated_for_date}
-                                        onChange={(e) =>
-                                            updateForm.setData(
-                                                'updated_for_date',
-                                                e.target.value,
-                                            )
-                                        }
-                                        className={
-                                            updateForm.errors.updated_for_date
-                                                ? 'border-destructive'
-                                                : ''
-                                        }
-                                        disabled={updateForm.processing}
-                                    />
-                                    {updateForm.errors.updated_for_date && (
-                                        <InputError
-                                            message={
-                                                updateForm.errors
-                                                    .updated_for_date
-                                            }
-                                        />
-                                    )}
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    disabled={updateForm.processing}
-                                    className="w-full"
-                                >
-                                    {updateForm.processing
-                                        ? 'Saving…'
-                                        : 'Save update'}
-                                </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Update history</CardTitle>
-                        <CardDescription>
-                            All updates captured for this activity.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {activity.updates.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                No updates yet.
-                            </p>
-                        ) : (
-                            <div className="space-y-3">
-                                {activity.updates.map((update) => (
-                                    <div
-                                        key={update.id}
-                                        className="flex flex-col gap-2 rounded-lg border p-4 md:flex-row md:items-start md:justify-between"
-                                    >
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <Badge
-                                                    variant={
-                                                        update.status === 'done'
-                                                            ? 'default'
-                                                            : 'secondary'
-                                                    }
-                                                >
-                                                    {update.status}
-                                                </Badge>
-                                                <span className="text-sm text-muted-foreground">
-                                                    {new Intl.DateTimeFormat(
-                                                        'en-GB',
-                                                        { dateStyle: 'medium' },
-                                                    ).format(
-                                                        new Date(
-                                                            update.updated_for_date,
-                                                        ),
-                                                    )}
-                                                </span>
-                                            </div>
-                                            <p className="text-sm">
-                                                {update.remark || '—'}
-                                            </p>
-                                        </div>
-                                        <div className="text-sm text-muted-foreground md:text-right">
-                                            <p>{update.user.name}</p>
-                                            <p>
-                                                {new Intl.DateTimeFormat(
-                                                    'en-GB',
-                                                    {
-                                                        dateStyle: 'medium',
-                                                        timeStyle: 'short',
-                                                    },
-                                                ).format(
-                                                    new Date(update.created_at),
-                                                )}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
+                                <ActivityUpdateDialog
+                                    activityId={activity.id}
+                                    activityTitle={activity.title}
+                                    trigger={
+                                        <Button size="sm">
+                                            Add New Update
+                                        </Button>
+                                    }
+                                />
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Target Date</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="w-[40%]">
+                                            Remark
+                                        </TableHead>
+                                        <TableHead>Updated By</TableHead>
+                                        <TableHead>Updated On</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {activity.updates.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell
+                                                colSpan={5}
+                                                className="h-32 text-center text-muted-foreground"
+                                            >
+                                                No updates yet.
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        activity.updates.map((update) => (
+                                            <TableRow key={update.id}>
+                                                <TableCell className="text-sm font-medium text-foreground">
+                                                    {formatDate(
+                                                        update.updated_for_date,
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <StatusBadge
+                                                        status={update.status}
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="text-sm text-muted-foreground">
+                                                    {update.remark || '—'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-3">
+                                                        <UserAvatar
+                                                            name={
+                                                                update.user.name
+                                                            }
+                                                        />
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm font-medium text-foreground">
+                                                                {
+                                                                    update.user
+                                                                        .name
+                                                                }
+                                                            </span>
+                                                            {update.user
+                                                                .role_title && (
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    {
+                                                                        update
+                                                                            .user
+                                                                            .role_title
+                                                                    }
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-sm text-muted-foreground">
+                                                    {formatDateTime(
+                                                        update.created_at,
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
+
+                    {/* Sidebar: Admin Tasks */}
+                    <div className="space-y-6">
+                        <Card className="shadow-sm">
+                            <CardHeader>
+                                <CardTitle className="text-lg">
+                                    Activity Details
+                                </CardTitle>
+                                <CardDescription>
+                                    Modify basic activity information.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <form
+                                    className="space-y-4"
+                                    onSubmit={submitActivity}
+                                >
+                                    <div className="space-y-2">
+                                        <Label htmlFor="title">Title *</Label>
+                                        <Input
+                                            id="title"
+                                            value={activityForm.data.title}
+                                            onChange={(e) =>
+                                                activityForm.setData(
+                                                    'title',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            placeholder="Enter activity title"
+                                            disabled={activityForm.processing}
+                                        />
+                                        {activityForm.errors.title && (
+                                            <InputError
+                                                message={
+                                                    activityForm.errors.title
+                                                }
+                                            />
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="description">
+                                            Description
+                                        </Label>
+                                        <textarea
+                                            id="description"
+                                            rows={3}
+                                            placeholder="Describe this activity"
+                                            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                            value={
+                                                activityForm.data.description
+                                            }
+                                            onChange={(e) =>
+                                                activityForm.setData(
+                                                    'description',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            disabled={activityForm.processing}
+                                            aria-label="Activity description"
+                                        />
+                                        {activityForm.errors.description && (
+                                            <InputError
+                                                message={
+                                                    activityForm.errors
+                                                        .description
+                                                }
+                                            />
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            id="is_active"
+                                            checked={
+                                                activityForm.data.is_active
+                                            }
+                                            onChange={(e) =>
+                                                activityForm.setData(
+                                                    'is_active',
+                                                    e.target.checked,
+                                                )
+                                            }
+                                            disabled={activityForm.processing}
+                                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                            aria-label="Is active"
+                                        />
+                                        <Label
+                                            htmlFor="is_active"
+                                            className="cursor-pointer"
+                                        >
+                                            Active
+                                        </Label>
+                                    </div>
+
+                                    <Button
+                                        type="submit"
+                                        disabled={activityForm.processing}
+                                        className="w-full"
+                                    >
+                                        {activityForm.processing
+                                            ? 'Saving…'
+                                            : 'Update Activity'}
+                                    </Button>
+                                </form>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-destructive/20 bg-destructive/5 shadow-sm">
+                            <CardHeader>
+                                <CardTitle className="text-lg text-destructive">
+                                    Danger Zone
+                                </CardTitle>
+                                <CardDescription>
+                                    Irreversible administrative actions.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    onClick={removeActivity}
+                                    className="w-full gap-2"
+                                    aria-label="Delete activity"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    Delete Activity
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
             </div>
         </>
     );
