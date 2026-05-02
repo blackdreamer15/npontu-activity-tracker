@@ -87,10 +87,17 @@ class ActivityController extends Controller
 
     public function show(Activity $activity): Response
     {
-        $activity->load(['createdBy', 'updates.user']);
+        $activity->load(['createdBy']);
+        
+        $updates = $activity->updates()
+            ->with('user')
+            ->orderByDesc('updated_for_date')
+            ->orderByDesc('created_at')
+            ->paginate(10);
 
         return Inertia::render('Activities/Show', [
             'activity' => $activity,
+            'updates'  => $updates,
         ]);
     }
 
