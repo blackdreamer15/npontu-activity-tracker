@@ -13,13 +13,64 @@ use Inertia\Response;
 
 class ActivityController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $search = $request->input('search');
+        $lifecycle = $request->input('lifecycle');
+        $status = $request->input('status');
+
+        $activities = Activity::query()
+            ->with(['createdBy', 'latestUpdate.user'])
+            ->withCount(['updates' => function ($query) {
+                $query->whereDate('updated_for_date', now()->toDateString())
+                    ->where('status', 'done');
+            }])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($lifecycle, function ($query, $lifecycle) {
+                if ($lifecycle === 'active') $query->where('is_active', true);
+                if ($lifecycle === 'inactive') $query->where('is_active', false);
+            })
+            ->when($status, function ($query, $status) {
+                if ($status === 'done') {
+                    $query->whereHas('updates', function ($q) {
+                        $q->whereDate('updated_for_date', now()->toDateString())
+                            ->where('status', 'done');
+                    });
+                } elseif ($status === 'pending') {
+                    $query->where(function ($q) {
+                        $q->whereDoesntHave('updates', function ($sq) {
+                            $sq->whereDate('updated_for_date', now()->toDateString());
+                        })->orWhereHas('updates', function ($sq) {
+                            $sq->whereDate('updated_for_date', now()->toDateString())
+                                ->where('status', 'pending');
+                        });
+                    });
+                }
+            })
+            ->latest()
+            ->get()
+            ->map(function ($activity) {
+                // Determine today's status manually for the badge
+                $todayUpdate = $activity->updates()
+                    ->whereDate('updated_for_date', now()->toDateString())
+                    ->first();
+                
+                $activity->today_status = $todayUpdate ? $todayUpdate->status : 'pending';
+                return $activity;
+            });
+
         return Inertia::render('Activities/Index', [
-            'activities' => Activity::query()
-                ->with(['createdBy', 'updates.user'])
-                ->latest()
-                ->get(),
+            'activities' => $activities,
+            'filters' => [
+                'search' => $search,
+                'lifecycle' => $lifecycle,
+                'status' => $status,
+            ],
         ]);
     }
 
@@ -64,14 +115,28 @@ class ActivityController extends Controller
         $validated = $request->validate([
             'start' => 'nullable|date',
             'end' => 'nullable|date|after_or_equal:start',
+            'search' => 'nullable|string',
+            'status' => 'nullable|string',
         ]);
 
         $start = $validated['start'] ?? now()->startOfMonth()->toDateString();
         $end = $validated['end'] ?? now()->toDateString();
+        $search = $validated['search'] ?? null;
+        $status = $validated['status'] ?? null;
 
         $updates = ActivityUpdate::with(['activity', 'user'])
             ->whereDate('updated_for_date', '>=', $start)
             ->whereDate('updated_for_date', '<=', $end)
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('activity', function ($aq) use ($search) {
+                        $aq->where('title', 'like', "%{$search}%");
+                    })->orWhere('remark', 'like', "%{$search}%");
+                });
+            })
+            ->when($status, function ($query, $status) {
+                $query->where('status', $status);
+            })
             ->orderByDesc('updated_for_date')
             ->orderByDesc('created_at')
             ->get();
@@ -80,6 +145,10 @@ class ActivityController extends Controller
             'start' => $start,
             'end' => $end,
             'updates' => $updates,
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+            ],
         ]);
     }
 }
