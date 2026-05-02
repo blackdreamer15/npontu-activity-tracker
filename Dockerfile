@@ -1,7 +1,7 @@
 FROM composer:2 AS composer-stage
 FROM php:8.4-cli-alpine AS build
 
-WORKDIR /app
+WORKDIR /var/www/html
 
 # Copy Composer from the official Composer image
 COPY --from=composer-stage /usr/bin/composer /usr/bin/composer
