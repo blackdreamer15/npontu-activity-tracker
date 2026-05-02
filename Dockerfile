@@ -66,8 +66,8 @@ RUN apk add --no-cache \
 RUN addgroup -g 10001 -S app \
     && adduser -S -u 10001 -G app -h /home/appuser appuser
 
-COPY --from=build /app/vendor ./vendor
-COPY --from=build /app/public/build ./public/build
+COPY --from=build /var/www/html/vendor ./vendor
+COPY --from=build /var/www/html/public/build ./public/build
 COPY artisan ./
 COPY app ./app
 COPY bootstrap ./bootstrap
