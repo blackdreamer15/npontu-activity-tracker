@@ -1,0 +1,7 @@
+# Ignore everything under storage by default, but keep placeholder files
+*
+!.gitkeep
+!.gitignore
+
+# Keep these directories visible in Git by adding `.gitkeep` files inside them
+# (see storage/*/.gitkeep)
