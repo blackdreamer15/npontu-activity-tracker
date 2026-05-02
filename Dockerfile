@@ -32,7 +32,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . ./
-RUN [ -f .env ] || printf "APP_NAME=ActivityTracker\nAPP_ENV=production\nAPP_KEY=\nAPP_DEBUG=false\nAPP_URL=http://localhost\n" > .env \
+RUN [ -f .env ] || printf "APP_NAME=Shinkuro\nAPP_ENV=production\nAPP_KEY=\nAPP_DEBUG=false\nAPP_URL=http://localhost\n" > .env \
     && php artisan key:generate --force --ansi
 RUN pnpm run build
 RUN composer install \
