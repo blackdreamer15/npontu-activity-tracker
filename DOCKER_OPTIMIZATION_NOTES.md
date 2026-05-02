@@ -42,6 +42,9 @@ In `Dockerfile` build stage we added dependencies required by Composer and asset
 
 Also ensured build-time app bootstrap is available by creating a minimal `.env` and generating app key during build when needed.
 
+- **Fixed `pnpm install` crash in CI (Render):** Copied `pnpm-workspace.yaml` and `.npmrc` to the Docker context before running `pnpm install` so that pnpm security policies (e.g. `allowBuilds: unrs-resolver: true` and `ignore-scripts=true`) are respected during container build, resolving `[ERR_PNPM_IGNORED_BUILDS]` crashes.
+- **Removed Unused runtime extensions:** Removed SQLite libraries (`sqlite-libs`, `sqlite-dev`, `pdo_sqlite`) and the unused `COMPOSER_ALLOW_SUPERUSER=1` environment variable from the final runtime container to minimize security surface area and keep the image size at a minimal ~209MB.
+
 ## 2. Build/runtime dependency separation
 
 We used a two-pass Composer install in build stage:
