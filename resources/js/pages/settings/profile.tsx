@@ -1,8 +1,11 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
+import React, { Suspense } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import Heading from '@/components/atoms/heading';
 import InputError from '@/components/atoms/input-error-inline';
-import DeleteUser from '@/components/organisms/delete-user';
+const DeleteUser = React.lazy(
+    () => import('@/components/organisms/delete-user'),
+);
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -87,7 +90,8 @@ export default function Profile({
                                         Bio Details
                                     </h3>
                                     <p className="text-sm text-muted-foreground">
-                                        Required for activity tracking compliance.
+                                        Required for activity tracking
+                                        compliance.
                                     </p>
                                 </div>
 
@@ -96,12 +100,17 @@ export default function Profile({
                                     <Input
                                         id="staff_id"
                                         className="mt-1 block w-full"
-                                        defaultValue={(auth.user.staff_id as string) || ''}
+                                        defaultValue={
+                                            (auth.user.staff_id as string) || ''
+                                        }
                                         name="staff_id"
                                         placeholder="e.g. EMP-001"
                                         aria-label="Staff ID"
                                     />
-                                    <InputError className="mt-2" message={errors.staff_id} />
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.staff_id}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
@@ -109,38 +118,59 @@ export default function Profile({
                                     <Input
                                         id="phone"
                                         className="mt-1 block w-full"
-                                        defaultValue={(auth.user.phone as string) || ''}
+                                        defaultValue={
+                                            (auth.user.phone as string) || ''
+                                        }
                                         name="phone"
                                         placeholder="e.g. +1 234 567 8900"
                                         aria-label="Phone Number"
                                     />
-                                    <InputError className="mt-2" message={errors.phone} />
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.phone}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="department">Department</Label>
+                                    <Label htmlFor="department">
+                                        Department
+                                    </Label>
                                     <Input
                                         id="department"
                                         className="mt-1 block w-full"
-                                        defaultValue={(auth.user.department as string) || ''}
+                                        defaultValue={
+                                            (auth.user.department as string) ||
+                                            ''
+                                        }
                                         name="department"
                                         placeholder="e.g. Application Support"
                                         aria-label="Department"
                                     />
-                                    <InputError className="mt-2" message={errors.department} />
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.department}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="role_title">Role Title</Label>
+                                    <Label htmlFor="role_title">
+                                        Role Title
+                                    </Label>
                                     <Input
                                         id="role_title"
                                         className="mt-1 block w-full"
-                                        defaultValue={(auth.user.role_title as string) || ''}
+                                        defaultValue={
+                                            (auth.user.role_title as string) ||
+                                            ''
+                                        }
                                         name="role_title"
                                         placeholder="e.g. Support Engineer"
                                         aria-label="Role Title"
                                     />
-                                    <InputError className="mt-2" message={errors.role_title} />
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.role_title}
+                                    />
                                 </div>
                             </div>
 
@@ -184,7 +214,9 @@ export default function Profile({
                 </Form>
             </div>
 
-            <DeleteUser />
+            <Suspense fallback={<div className="mt-4">Loading…</div>}>
+                <DeleteUser />
+            </Suspense>
         </>
     );
 }

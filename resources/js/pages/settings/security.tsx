@@ -1,12 +1,16 @@
 import { Form, Head } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import Heading from '@/components/atoms/heading';
 import InputError from '@/components/atoms/input-error-inline';
 import PasswordInput from '@/components/atoms/password-input';
-import TwoFactorRecoveryCodes from '@/components/organisms/two-factor-recovery-codes';
-import TwoFactorSetupModal from '@/components/organisms/two-factor-setup-modal';
+const TwoFactorRecoveryCodes = React.lazy(
+    () => import('@/components/organisms/two-factor-recovery-codes'),
+);
+const TwoFactorSetupModal = React.lazy(
+    () => import('@/components/organisms/two-factor-setup-modal'),
+);
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
@@ -178,11 +182,17 @@ export default function Security({
                                 </Form>
                             </div>
 
-                            <TwoFactorRecoveryCodes
-                                recoveryCodesList={recoveryCodesList}
-                                fetchRecoveryCodes={fetchRecoveryCodes}
-                                errors={errors}
-                            />
+                            <Suspense
+                                fallback={
+                                    <div className="mt-2">Loading codes…</div>
+                                }
+                            >
+                                <TwoFactorRecoveryCodes
+                                    recoveryCodesList={recoveryCodesList}
+                                    fetchRecoveryCodes={fetchRecoveryCodes}
+                                    errors={errors}
+                                />
+                            </Suspense>
                         </div>
                     ) : (
                         <div className="flex flex-col items-start justify-start space-y-4">
@@ -222,17 +232,19 @@ export default function Security({
                         </div>
                     )}
 
-                    <TwoFactorSetupModal
-                        isOpen={showSetupModal}
-                        onClose={() => setShowSetupModal(false)}
-                        requiresConfirmation={requiresConfirmation}
-                        twoFactorEnabled={twoFactorEnabled}
-                        qrCodeSvg={qrCodeSvg}
-                        manualSetupKey={manualSetupKey}
-                        clearSetupData={clearSetupData}
-                        fetchSetupData={fetchSetupData}
-                        errors={errors}
-                    />
+                    <Suspense fallback={null}>
+                        <TwoFactorSetupModal
+                            isOpen={showSetupModal}
+                            onClose={() => setShowSetupModal(false)}
+                            requiresConfirmation={requiresConfirmation}
+                            twoFactorEnabled={twoFactorEnabled}
+                            qrCodeSvg={qrCodeSvg}
+                            manualSetupKey={manualSetupKey}
+                            clearSetupData={clearSetupData}
+                            fetchSetupData={fetchSetupData}
+                            errors={errors}
+                        />
+                    </Suspense>
                 </div>
             )}
         </>
