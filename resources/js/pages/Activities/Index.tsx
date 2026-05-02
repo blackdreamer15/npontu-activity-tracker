@@ -3,7 +3,13 @@ import type { FormEvent } from 'react';
 import InputError from '@/components/InputError';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -21,7 +27,11 @@ type Activity = {
     }>;
 };
 
-export default function ActivitiesIndex({ activities }: { activities: Activity[] }) {
+export default function ActivitiesIndex({
+    activities,
+}: {
+    activities: Activity[];
+}) {
     const form = useForm({
         title: '',
         description: '',
@@ -45,12 +55,19 @@ export default function ActivitiesIndex({ activities }: { activities: Activity[]
             <div className="space-y-6 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Activities</h1>
-                        <p className="mt-2 text-sm text-muted-foreground">Create and manage the support activities your team tracks daily.</p>
+                        <h1 className="text-3xl font-bold tracking-tight">
+                            Activities
+                        </h1>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            Create and manage the support activities your team
+                            tracks daily.
+                        </p>
                     </div>
-                    <div className="flex gap-2 flex-wrap justify-end">
+                    <div className="flex flex-wrap justify-end gap-2">
                         <Button asChild variant="outline" size="sm">
-                            <Link href="/activities/history">Daily History</Link>
+                            <Link href="/activities/history">
+                                Daily History
+                            </Link>
                         </Button>
                         <Button asChild variant="outline" size="sm">
                             <Link href="/reports/activities">Reports</Link>
@@ -61,21 +78,35 @@ export default function ActivitiesIndex({ activities }: { activities: Activity[]
                 <Card>
                     <CardHeader>
                         <CardTitle>Add new activity</CardTitle>
-                        <CardDescription>Keep the activity names short, clear, and operational.</CardDescription>
+                        <CardDescription>
+                            Keep the activity names short, clear, and
+                            operational.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form className="grid gap-4 md:grid-cols-[1fr_1fr_auto]" onSubmit={submit}>
+                        <form
+                            className="grid gap-4 md:grid-cols-[1fr_1fr_auto]"
+                            onSubmit={submit}
+                        >
                             <div className="space-y-2">
                                 <Label htmlFor="title">Title *</Label>
                                 <Input
                                     id="title"
                                     value={form.data.title}
-                                    onChange={(e) => form.setData('title', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData('title', e.target.value)
+                                    }
                                     placeholder="Activity name"
-                                    className={form.errors.title ? 'border-destructive' : ''}
+                                    className={
+                                        form.errors.title
+                                            ? 'border-destructive'
+                                            : ''
+                                    }
                                     disabled={form.processing}
                                 />
-                                {form.errors.title && <InputError message={form.errors.title} />}
+                                {form.errors.title && (
+                                    <InputError message={form.errors.title} />
+                                )}
                             </div>
 
                             <div className="space-y-2 md:col-span-1">
@@ -83,17 +114,36 @@ export default function ActivitiesIndex({ activities }: { activities: Activity[]
                                 <Input
                                     id="description"
                                     value={form.data.description}
-                                    onChange={(e) => form.setData('description', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'description',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="What this activity measures"
-                                    className={form.errors.description ? 'border-destructive' : ''}
+                                    className={
+                                        form.errors.description
+                                            ? 'border-destructive'
+                                            : ''
+                                    }
                                     disabled={form.processing}
                                 />
-                                {form.errors.description && <InputError message={form.errors.description} />}
+                                {form.errors.description && (
+                                    <InputError
+                                        message={form.errors.description}
+                                    />
+                                )}
                             </div>
 
                             <div className="flex items-end">
-                                <Button type="submit" disabled={form.processing} className="w-full md:w-auto">
-                                    {form.processing ? 'Creating…' : 'Create activity'}
+                                <Button
+                                    type="submit"
+                                    disabled={form.processing}
+                                    className="w-full md:w-auto"
+                                >
+                                    {form.processing
+                                        ? 'Creating…'
+                                        : 'Create activity'}
                                 </Button>
                             </div>
                         </form>
@@ -105,39 +155,81 @@ export default function ActivitiesIndex({ activities }: { activities: Activity[]
                         <Card>
                             <CardContent className="pt-6">
                                 <div className="text-center">
-                                    <p className="text-sm text-muted-foreground">No activities have been created yet.</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Create your first activity above to get started.</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        No activities have been created yet.
+                                    </p>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Create your first activity above to get
+                                        started.
+                                    </p>
                                 </div>
                             </CardContent>
                         </Card>
                     ) : (
                         activities.map((activity) => (
-                            <Card key={activity.id} className="hover:shadow-md transition-shadow">
+                            <Card
+                                key={activity.id}
+                                className="transition-shadow hover:shadow-md"
+                            >
                                 <CardHeader>
                                     <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <CardTitle className="text-lg">{activity.title}</CardTitle>
-                                        <Badge variant={activity.is_active ? 'default' : 'secondary'}>
-                                            {activity.is_active ? 'Active' : 'Inactive'}
+                                        <CardTitle className="text-lg">
+                                            {activity.title}
+                                        </CardTitle>
+                                        <Badge
+                                            variant={
+                                                activity.is_active
+                                                    ? 'default'
+                                                    : 'secondary'
+                                            }
+                                        >
+                                            {activity.is_active
+                                                ? 'Active'
+                                                : 'Inactive'}
                                         </Badge>
                                     </div>
-                                    {activity.description && <CardDescription>{activity.description}</CardDescription>}
+                                    {activity.description && (
+                                        <CardDescription>
+                                            {activity.description}
+                                        </CardDescription>
+                                    )}
                                 </CardHeader>
                                 <CardContent className="flex flex-wrap items-center justify-between gap-4">
                                     <div className="space-y-1">
-                                        <p className="text-sm font-medium text-foreground">Latest update</p>
+                                        <p className="text-sm font-medium text-foreground">
+                                            Latest update
+                                        </p>
                                         {activity.updates[0] ? (
                                             <div className="flex items-center gap-2">
-                                                <Badge variant={getStatusColor(activity.updates[0].status)} className="text-xs">
+                                                <Badge
+                                                    variant={getStatusColor(
+                                                        activity.updates[0]
+                                                            .status,
+                                                    )}
+                                                    className="text-xs"
+                                                >
                                                     {activity.updates[0].status}
                                                 </Badge>
-                                                <p className="text-xs text-muted-foreground">by {activity.updates[0].user.name}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    by{' '}
+                                                    {
+                                                        activity.updates[0].user
+                                                            .name
+                                                    }
+                                                </p>
                                             </div>
                                         ) : (
-                                            <p className="text-xs text-muted-foreground">No updates yet</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                No updates yet
+                                            </p>
                                         )}
                                     </div>
                                     <Button asChild variant="outline" size="sm">
-                                        <Link href={`/activities/${activity.id}`}>Manage</Link>
+                                        <Link
+                                            href={`/activities/${activity.id}`}
+                                        >
+                                            Manage
+                                        </Link>
                                     </Button>
                                 </CardContent>
                             </Card>
