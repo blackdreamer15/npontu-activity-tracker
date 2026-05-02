@@ -16,7 +16,13 @@ import {
 } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 
 type DashboardProps = {
     metrics: {
@@ -37,14 +43,24 @@ type DashboardProps = {
         dailyVolume: Array<{ date: string; updates: number }>;
         completionTrend: Array<{ date: string; completed: number }>;
         statusBreakdown: Array<{ name: string; value: number; fill: string }>;
-        activityBreakdown: Array<{ name: string; done: number; pending: number }>;
+        activityBreakdown: Array<{
+            name: string;
+            done: number;
+            pending: number;
+        }>;
     };
 };
 
-export default function Dashboard({ metrics, todayUpdates, charts }: DashboardProps) {
+export default function Dashboard({
+    metrics,
+    todayUpdates,
+    charts,
+}: DashboardProps) {
     const todayPending = metrics.todayUpdates - metrics.todayCompleted;
     const completionRate =
-        metrics.todayUpdates > 0 ? Math.round((metrics.todayCompleted / metrics.todayUpdates) * 100) : 0;
+        metrics.todayUpdates > 0
+            ? Math.round((metrics.todayCompleted / metrics.todayUpdates) * 100)
+            : 0;
 
     return (
         <>
@@ -53,7 +69,9 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                 {/* Welcome & Quick Actions */}
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                        <h1 className="text-3xl font-bold tracking-tight">
+                            Dashboard
+                        </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             Welcome back! Here's your activity overview.
                         </p>
@@ -63,7 +81,9 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                             <Link href="/activities">Create Activity</Link>
                         </Button>
                         <Button asChild variant="outline" size="sm">
-                            <Link href="/activities/history">Daily History</Link>
+                            <Link href="/activities/history">
+                                Daily History
+                            </Link>
                         </Button>
                         <Button asChild variant="outline" size="sm">
                             <Link href="/reports/activities">Reports</Link>
@@ -80,8 +100,10 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">{metrics.totalActivities}</div>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <div className="text-3xl font-bold">
+                                {metrics.totalActivities}
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
                                 {metrics.activeActivities} active
                             </p>
                         </CardContent>
@@ -94,8 +116,10 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">{metrics.todayUpdates}</div>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <div className="text-3xl font-bold">
+                                {metrics.todayUpdates}
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
                                 {metrics.todayCompleted} completed
                             </p>
                         </CardContent>
@@ -108,8 +132,10 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">{completionRate}%</div>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <div className="text-3xl font-bold">
+                                {completionRate}%
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
                                 {todayPending} pending
                             </p>
                         </CardContent>
@@ -123,10 +149,16 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                         </CardHeader>
                         <CardContent>
                             <div className="flex items-baseline gap-2">
-                                <Badge className="bg-green-600">{charts.statusBreakdown[0]?.value || 0}</Badge>
-                                <Badge variant="secondary">{charts.statusBreakdown[1]?.value || 0}</Badge>
+                                <Badge className="bg-green-600">
+                                    {charts.statusBreakdown[0]?.value || 0}
+                                </Badge>
+                                <Badge variant="secondary">
+                                    {charts.statusBreakdown[1]?.value || 0}
+                                </Badge>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-2">Done / Pending</p>
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                Done / Pending
+                            </p>
                         </CardContent>
                     </Card>
                 </div>
@@ -137,7 +169,9 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                     <Card>
                         <CardHeader>
                             <CardTitle>Daily Activity Volume</CardTitle>
-                            <CardDescription>Updates recorded per day (last 7 days)</CardDescription>
+                            <CardDescription>
+                                Updates recorded per day (last 7 days)
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={300}>
@@ -156,7 +190,9 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                     <Card>
                         <CardHeader>
                             <CardTitle>Completion Trend</CardTitle>
-                            <CardDescription>Percentage of completed updates (last 7 days)</CardDescription>
+                            <CardDescription>
+                                Percentage of completed updates (last 7 days)
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={300}>
@@ -164,7 +200,9 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="date" />
                                     <YAxis domain={[0, 100]} />
-                                    <Tooltip formatter={(value) => `${value}%`} />
+                                    <Tooltip
+                                        formatter={(value) => `${value}%`}
+                                    />
                                     <Line
                                         type="monotone"
                                         dataKey="completed"
@@ -181,7 +219,9 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                     <Card>
                         <CardHeader>
                             <CardTitle>Status Distribution</CardTitle>
-                            <CardDescription>All-time done vs pending updates</CardDescription>
+                            <CardDescription>
+                                All-time done vs pending updates
+                            </CardDescription>
                         </CardHeader>
                         <CardContent className="flex items-center justify-center">
                             <ResponsiveContainer width="100%" height={300}>
@@ -191,14 +231,21 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                                         cx="50%"
                                         cy="50%"
                                         labelLine={false}
-                                        label={({ name, value }) => `${name}: ${value}`}
+                                        label={({ name, value }) =>
+                                            `${name}: ${value}`
+                                        }
                                         outerRadius={80}
                                         fill="#8884d8"
                                         dataKey="value"
                                     >
-                                        {charts.statusBreakdown.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                                        ))}
+                                        {charts.statusBreakdown.map(
+                                            (entry, index) => (
+                                                <Cell
+                                                    key={`cell-${index}`}
+                                                    fill={entry.fill}
+                                                />
+                                            ),
+                                        )}
                                     </Pie>
                                     <Tooltip />
                                 </PieChart>
@@ -210,14 +257,23 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                     <Card>
                         <CardHeader>
                             <CardTitle>Activity Completion</CardTitle>
-                            <CardDescription>Done vs pending by activity (top 5)</CardDescription>
+                            <CardDescription>
+                                Done vs pending by activity (top 5)
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={charts.activityBreakdown} layout="vertical">
+                                <BarChart
+                                    data={charts.activityBreakdown}
+                                    layout="vertical"
+                                >
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis type="number" />
-                                    <YAxis dataKey="name" type="category" width={100} />
+                                    <YAxis
+                                        dataKey="name"
+                                        type="category"
+                                        width={100}
+                                    />
                                     <Tooltip />
                                     <Legend />
                                     <Bar dataKey="done" fill="#10b981" />
@@ -232,14 +288,20 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                 <Card>
                     <CardHeader>
                         <CardTitle>Today's Updates</CardTitle>
-                        <CardDescription>Latest activity updates from today</CardDescription>
+                        <CardDescription>
+                            Latest activity updates from today
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         {todayUpdates.length === 0 ? (
-                            <div className="text-center py-8">
-                                <p className="text-sm text-muted-foreground">No updates recorded yet today.</p>
+                            <div className="py-8 text-center">
+                                <p className="text-sm text-muted-foreground">
+                                    No updates recorded yet today.
+                                </p>
                                 <Button asChild size="sm" className="mt-3">
-                                    <Link href="/activities">Record First Update</Link>
+                                    <Link href="/activities">
+                                        Record First Update
+                                    </Link>
                                 </Button>
                             </div>
                         ) : (
@@ -250,18 +312,33 @@ export default function Dashboard({ metrics, todayUpdates, charts }: DashboardPr
                                         className="flex flex-col gap-2 rounded-lg border p-4 md:flex-row md:items-start md:justify-between"
                                     >
                                         <div className="flex-1">
-                                            <p className="font-semibold">{update.activity.title}</p>
-                                            <p className="text-xs text-muted-foreground mt-1">
+                                            <p className="font-semibold">
+                                                {update.activity.title}
+                                            </p>
+                                            <p className="mt-1 text-xs text-muted-foreground">
                                                 {update.user.name} •{' '}
-                                                {new Intl.DateTimeFormat('en-GB', {
-                                                    timeStyle: 'short',
-                                                }).format(new Date(update.created_at))}
+                                                {new Intl.DateTimeFormat(
+                                                    'en-GB',
+                                                    {
+                                                        timeStyle: 'short',
+                                                    },
+                                                ).format(
+                                                    new Date(update.created_at),
+                                                )}
                                             </p>
                                             {update.remark && (
-                                                <p className="text-sm text-foreground mt-2">{update.remark}</p>
+                                                <p className="mt-2 text-sm text-foreground">
+                                                    {update.remark}
+                                                </p>
                                             )}
                                         </div>
-                                        <Badge variant={update.status === 'done' ? 'default' : 'secondary'}>
+                                        <Badge
+                                            variant={
+                                                update.status === 'done'
+                                                    ? 'default'
+                                                    : 'secondary'
+                                            }
+                                        >
                                             {update.status}
                                         </Badge>
                                     </div>
