@@ -1,8 +1,15 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
+import React, { Suspense } from 'react';
 import InputError from '@/components/atoms/input-error-inline';
-import { ActivityUpdateDialog } from '@/components/molecules/activity-update-dialog';
+import { DeleteDialog } from '@/components/molecules/delete-dialog';
+const ActivityUpdateDialog = React.lazy(() =>
+    import('@/components/molecules/activity-update-dialog').then((m) => ({
+        default: m.ActivityUpdateDialog,
+    })),
+);
+import Pagination from '@/components/pagination';
 import StatusBadge from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +40,16 @@ type ActivityUpdate = {
     user: { id: number; name: string; role_title?: string | null };
 };
 
+type PaginatedData<T> = {
+    data: T[];
+    links: { url: string | null; label: string; active: boolean }[];
+    current_page: number;
+    last_page: number;
+    from: number;
+    to: number;
+    total: number;
+};
+
 type Activity = {
     id: number;
     title: string;
@@ -40,10 +57,15 @@ type Activity = {
     is_active: boolean;
     created_at: string;
     createdBy?: { id: number; name: string };
-    updates: ActivityUpdate[];
 };
 
-export default function ActivityShow({ activity }: { activity: Activity }) {
+export default function ActivityShow({
+    activity,
+    updates,
+}: {
+    activity: Activity;
+    updates: PaginatedData<ActivityUpdate>;
+}) {
     const activityForm = useForm({
         title: activity.title,
         description: activity.description ?? '',
@@ -55,16 +77,6 @@ export default function ActivityShow({ activity }: { activity: Activity }) {
         activityForm.put(`/activities/${activity.id}`, {
             preserveScroll: true,
         });
-    };
-
-    const removeActivity = () => {
-        if (
-            !confirm('Delete this activity? This will also remove its updates.')
-        ) {
-            return;
-        }
-
-        router.delete(`/activities/${activity.id}`, { preserveScroll: true });
     };
 
     const formatDateTime = (dateString: string) => {
@@ -92,18 +104,7 @@ export default function ActivityShow({ activity }: { activity: Activity }) {
             <div className="space-y-6 p-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Link
-                                href="/activities"
-                                className="flex items-center gap-1 underline hover:text-foreground"
-                            >
-                                <ArrowLeft className="h-3 w-3" />
-                                Activities
-                            </Link>
-                            <span>/</span>
-                            <span>Manage</span>
-                        </div>
-                        <h1 className="mt-2 text-3xl font-bold tracking-tight">
+                        <h1 className="text-3xl font-bold tracking-tight">
                             {activity.title}
                         </h1>
                     </div>
@@ -122,15 +123,17 @@ export default function ActivityShow({ activity }: { activity: Activity }) {
                                         Historical records for this activity.
                                     </p>
                                 </div>
-                                <ActivityUpdateDialog
-                                    activityId={activity.id}
-                                    activityTitle={activity.title}
-                                    trigger={
-                                        <Button size="sm">
-                                            Add New Update
-                                        </Button>
-                                    }
-                                />
+                                <Suspense fallback={<div className="h-9" />}>
+                                    <ActivityUpdateDialog
+                                        activityId={activity.id}
+                                        activityTitle={activity.title}
+                                        trigger={
+                                            <Button size="sm">
+                                                Add New Update
+                                            </Button>
+                                        }
+                                    />
+                                </Suspense>
                             </div>
                             <Table>
                                 <TableHeader>
@@ -145,7 +148,7 @@ export default function ActivityShow({ activity }: { activity: Activity }) {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {activity.updates.length === 0 ? (
+                                    {updates.data.length === 0 ? (
                                         <TableRow>
                                             <TableCell
                                                 colSpan={5}
@@ -155,7 +158,7 @@ export default function ActivityShow({ activity }: { activity: Activity }) {
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        activity.updates.map((update) => (
+                                        updates.data.map((update) => (
                                             <TableRow key={update.id}>
                                                 <TableCell className="text-sm font-medium text-foreground">
                                                     {formatDate(
@@ -207,6 +210,18 @@ export default function ActivityShow({ activity }: { activity: Activity }) {
                                     )}
                                 </TableBody>
                             </Table>
+                            <div className="border-t px-6">
+                                <Pagination
+                                    links={updates.links}
+                                    meta={{
+                                        current_page: updates.current_page,
+                                        last_page: updates.last_page,
+                                        from: updates.from,
+                                        to: updates.to,
+                                        total: updates.total,
+                                    }}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -328,16 +343,26 @@ export default function ActivityShow({ activity }: { activity: Activity }) {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <Button
-                                    type="button"
-                                    variant="destructive"
-                                    onClick={removeActivity}
-                                    className="w-full gap-2"
-                                    aria-label="Delete activity"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                    Delete Activity
-                                </Button>
+                                <DeleteDialog
+                                    title="Delete Activity?"
+                                    description="This will permanently remove this activity and all its history. This action cannot be undone."
+                                    trigger={
+                                        <Button
+                                            type="button"
+                                            variant="destructive"
+                                            className="w-full gap-2"
+                                            aria-label="Delete activity"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                            Delete Activity
+                                        </Button>
+                                    }
+                                    onConfirm={() =>
+                                        router.delete(
+                                            `/activities/${activity.id}`,
+                                        )
+                                    }
+                                />
                             </CardContent>
                         </Card>
                     </div>

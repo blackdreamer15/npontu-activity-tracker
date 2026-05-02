@@ -4,6 +4,7 @@ import { Calendar as CalendarIcon, Search, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
+import Pagination from '@/components/pagination';
 import StatusBadge from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -45,7 +46,17 @@ type UpdateRow = {
 interface ReportsProps {
     start: string;
     end: string;
-    updates: UpdateRow[];
+    updates: {
+        data: UpdateRow[];
+        links: any[];
+        current_page: number;
+        last_page: number;
+        from: number;
+        to: number;
+        total: number;
+    };
+    done_count: number;
+    pending_count: number;
     filters: {
         search?: string;
         status?: string;
@@ -56,12 +67,13 @@ export default function ActivitiesReports({
     start,
     end,
     updates,
+    done_count,
+    pending_count,
     filters,
 }: ReportsProps) {
     const [searchValue, setSearchValue] = useState(filters.search || '');
     const [statusValue, setStatusValue] = useState(filters.status || 'all');
 
-    // Convert strings to Date objects for the calendar
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
         from: parseISO(start),
         to: parseISO(end),
@@ -94,7 +106,6 @@ export default function ActivitiesReports({
         [],
     );
 
-    // Debounced search
     useEffect(() => {
         const timer = setTimeout(() => {
             if (searchValue !== (filters.search || '')) {
@@ -110,13 +121,6 @@ export default function ActivitiesReports({
         return () => clearTimeout(timer);
     }, [searchValue, statusValue, dateRange, filters.search, handleFilter]);
 
-    const doneCount = updates.filter(
-        (update) => update.status === 'done',
-    ).length;
-    const pendingCount = updates.filter(
-        (update) => update.status === 'pending',
-    ).length;
-
     const clearFilters = () => {
         setSearchValue('');
         setStatusValue('all');
@@ -130,7 +134,7 @@ export default function ActivitiesReports({
             <div className="space-y-6 p-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground">
                             Activity Reports
                         </h1>
                         <p className="mt-2 text-sm text-muted-foreground">
@@ -139,8 +143,7 @@ export default function ActivitiesReports({
                     </div>
                 </div>
 
-                {/* Summary Stats */}
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <Card className="shadow-sm">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -148,8 +151,8 @@ export default function ActivitiesReports({
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">
-                                {updates.length}
+                            <div className="text-3xl font-bold text-foreground">
+                                {updates.total}
                             </div>
                         </CardContent>
                     </Card>
@@ -161,7 +164,7 @@ export default function ActivitiesReports({
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold text-emerald-600">
-                                {doneCount}
+                                {done_count}
                             </div>
                         </CardContent>
                     </Card>
@@ -173,100 +176,88 @@ export default function ActivitiesReports({
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold text-amber-600">
-                                {pendingCount}
+                                {pending_count}
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Integrated Premium Toolbar */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-1 flex-wrap items-center gap-2">
                         <div className="relative w-full sm:max-w-md">
                             <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
-                                placeholder="Search by activity or remark..."
+                                placeholder="Search reports..."
                                 className="pr-9 pl-9"
                                 value={searchValue}
                                 onChange={(e) => setSearchValue(e.target.value)}
-                                aria-label="Search reports"
                             />
                             {searchValue && (
                                 <button
                                     type="button"
                                     onClick={() => setSearchValue('')}
                                     className="absolute top-2.5 right-2.5 hover:text-foreground"
-                                    aria-label="Clear search"
                                 >
                                     <X className="h-4 w-4 text-muted-foreground" />
                                 </button>
                             )}
                         </div>
 
-                        {/* Premium Date Range Picker */}
-                        <div className="grid w-full gap-2 sm:w-auto">
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        id="date"
-                                        variant={'outline'}
-                                        className={cn(
-                                            'w-full justify-start text-left font-normal sm:w-[280px]',
-                                            !dateRange &&
-                                                'text-muted-foreground',
-                                        )}
-                                    >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {dateRange?.from ? (
-                                            dateRange.to ? (
-                                                <>
-                                                    {format(
-                                                        dateRange.from,
-                                                        'LLL dd, y',
-                                                    )}{' '}
-                                                    -{' '}
-                                                    {format(
-                                                        dateRange.to,
-                                                        'LLL dd, y',
-                                                    )}
-                                                </>
-                                            ) : (
-                                                format(
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant={'outline'}
+                                    className={cn(
+                                        'w-full justify-start text-left font-normal sm:w-[280px]',
+                                        !dateRange && 'text-muted-foreground',
+                                    )}
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {dateRange?.from ? (
+                                        dateRange.to ? (
+                                            <>
+                                                {format(
                                                     dateRange.from,
                                                     'LLL dd, y',
-                                                )
-                                            )
+                                                )}{' '}
+                                                -{' '}
+                                                {format(
+                                                    dateRange.to,
+                                                    'LLL dd, y',
+                                                )}
+                                            </>
                                         ) : (
-                                            <span>Pick a date</span>
-                                        )}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent
-                                    className="w-auto p-0"
-                                    align="start"
-                                >
-                                    <Calendar
-                                        initialFocus
-                                        mode="range"
-                                        defaultMonth={dateRange?.from}
-                                        selected={dateRange}
-                                        onSelect={(range) => {
-                                            setDateRange(range);
-
-                                            if (range?.from && range?.to) {
-                                                handleFilter(
-                                                    searchValue,
-                                                    statusValue,
-                                                    range.from,
-                                                    range.to,
-                                                );
-                                            }
-                                        }}
-                                        numberOfMonths={2}
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                        </div>
+                                            format(dateRange.from, 'LLL dd, y')
+                                        )
+                                    ) : (
+                                        <span>Pick a date range</span>
+                                    )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                            >
+                                <Calendar
+                                    initialFocus
+                                    mode="range"
+                                    defaultMonth={dateRange?.from}
+                                    selected={dateRange}
+                                    onSelect={(range) => {
+                                        setDateRange(range);
+                                        if (range?.from && range?.to) {
+                                            handleFilter(
+                                                searchValue,
+                                                statusValue,
+                                                range.from,
+                                                range.to,
+                                            );
+                                        }
+                                    }}
+                                    numberOfMonths={2}
+                                />
+                            </PopoverContent>
+                        </Popover>
 
                         <Select
                             value={statusValue}
@@ -292,12 +283,10 @@ export default function ActivitiesReports({
 
                         {(searchValue || statusValue !== 'all') && (
                             <Button
-                                type="button"
                                 variant="ghost"
                                 size="sm"
                                 onClick={clearFilters}
                                 className="h-9 px-2 lg:px-3"
-                                aria-label="Reset filters"
                             >
                                 Reset
                                 <X className="ml-2 h-4 w-4" />
@@ -306,86 +295,135 @@ export default function ActivitiesReports({
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-md border bg-card shadow-sm">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Activity</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="w-[30%]">
-                                    Remark
-                                </TableHead>
-                                <TableHead>Updated By</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {updates.length === 0 ? (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={5}
-                                        className="h-32 text-center text-muted-foreground"
-                                    >
-                                        <div className="flex flex-col items-center justify-center space-y-1">
-                                            <p>
-                                                No activity updates match your
-                                                criteria.
-                                            </p>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                updates.map((update) => (
-                                    <TableRow key={update.id}>
-                                        <TableCell className="text-sm whitespace-nowrap text-muted-foreground">
-                                            {format(
-                                                parseISO(
-                                                    update.updated_for_date,
-                                                ),
-                                                'MMM dd, yyyy',
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="font-medium text-foreground">
-                                            {update.activity.title}
-                                        </TableCell>
-                                        <TableCell>
+                {updates.data.length === 0 ? (
+                    <div className="flex min-h-[300px] flex-col items-center justify-center rounded-md border bg-card p-8 text-center shadow-sm">
+                        <p className="text-lg font-medium text-foreground">
+                            No reports match your criteria.
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            Try adjusting your date range or filters.
+                        </p>
+                    </div>
+                ) : (
+                    <>
+                        {/* Mobile Grid */}
+                        <div className="grid grid-cols-1 gap-4 sm:hidden">
+                            {updates.data.map((update) => (
+                                <div
+                                    key={update.id}
+                                    className="space-y-3 rounded-lg border bg-card p-4 shadow-sm"
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <div className="space-y-1">
+                                            <div className="text-xs text-muted-foreground">
+                                                {format(
+                                                    parseISO(
+                                                        update.updated_for_date,
+                                                    ),
+                                                    'MMM dd, yyyy',
+                                                )}
+                                            </div>
+                                            <h3 className="font-semibold text-foreground">
+                                                {update.activity.title}
+                                            </h3>
                                             <StatusBadge
                                                 status={update.status}
                                             />
-                                        </TableCell>
-                                        <TableCell className="text-sm text-muted-foreground">
-                                            {update.remark || (
-                                                <span className="italic opacity-50">
-                                                    No remark
-                                                </span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-3">
-                                                <UserAvatar
-                                                    name={update.user.name}
-                                                />
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-medium text-foreground">
-                                                        {update.user.name}
-                                                    </span>
-                                                    {update.user.role_title && (
-                                                        <span className="text-xs text-muted-foreground">
-                                                            {
-                                                                update.user
-                                                                    .role_title
-                                                            }
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </TableCell>
+                                        </div>
+                                    </div>
+                                    {update.remark && (
+                                        <div className="rounded bg-muted/30 p-2 text-sm text-muted-foreground italic">
+                                            "{update.remark}"
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-2 border-t border-border/50 pt-1">
+                                        <UserAvatar
+                                            name={update.user.name}
+                                            className="h-6 w-6"
+                                        />
+                                        <span className="text-xs font-medium text-foreground">
+                                            {update.user.name}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Table */}
+                        <div className="hidden overflow-hidden rounded-md border bg-card shadow-sm sm:block">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Activity</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="w-[30%]">
+                                            Remark
+                                        </TableHead>
+                                        <TableHead>Updated By</TableHead>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                                </TableHeader>
+                                <TableBody>
+                                    {updates.data.map((update) => (
+                                        <TableRow key={update.id}>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {format(
+                                                    parseISO(
+                                                        update.updated_for_date,
+                                                    ),
+                                                    'MMM dd, yyyy',
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="font-medium text-foreground">
+                                                {update.activity.title}
+                                            </TableCell>
+                                            <TableCell>
+                                                <StatusBadge
+                                                    status={update.status}
+                                                />
+                                            </TableCell>
+                                            <TableCell className="line-clamp-2 text-sm text-muted-foreground">
+                                                {update.remark || '-'}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <UserAvatar
+                                                        name={update.user.name}
+                                                    />
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-medium text-foreground">
+                                                            {update.user.name}
+                                                        </span>
+                                                        {update.user
+                                                            .role_title && (
+                                                            <span className="text-xs text-muted-foreground">
+                                                                {
+                                                                    update.user
+                                                                        .role_title
+                                                                }
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+
+                        <Pagination
+                            links={updates.links}
+                            meta={{
+                                current_page: updates.current_page,
+                                last_page: updates.last_page,
+                                from: updates.from,
+                                to: updates.to,
+                                total: updates.total,
+                            }}
+                        />
+                    </>
+                )}
             </div>
         </>
     );
