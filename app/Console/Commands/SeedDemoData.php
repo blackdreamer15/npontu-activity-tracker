@@ -75,8 +75,9 @@ class SeedDemoData extends Command
         }
 
         $activityTemplates = [
-            'MTN MoMo Integration Audit', 'Telecel Network Stability Check', 'G-Money Transaction Review',
-            'Ecobank API Sync', 'GCB Batch Processing', 'GRIDCo Load Shedding Analysis', 
+            'Daily SMS count in comparison to logs', 'Mobile Money Settlement Audit', 'USSD Gateway Health Check',
+            'Bank Switch Reconciliation', 'Airtime Top-up Verification', 'Merchant Payment Log Audit',
+            'Customer KYC Compliance Check', 'System Resource Utilization Audit', 'Database Replication Sync',
             'GWCL Billing Verification', 'Kibi Regional Server Audit', 'Kumasi Data Center Maintenance',
             'Accra Head Office Security Check', 'Takoradi Port Logistics Log', 'Tamale Branch Connectivity',
             'Ghana Gov Gateway Sync', 'GRA Tax Portal Verification'
