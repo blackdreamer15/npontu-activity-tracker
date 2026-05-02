@@ -14,6 +14,7 @@ import {
     Legend,
     ResponsiveContainer,
 } from 'recharts';
+import StatusBadge from '@/components/status-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +24,15 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import UserAvatar from '@/components/user-avatar';
 
 type DashboardProps = {
     metrics: {
@@ -262,35 +272,58 @@ export default function Dashboard({
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
+                            <ResponsiveContainer width="100%" height={450}>
                                 <BarChart
                                     data={charts.activityBreakdown}
                                     layout="vertical"
+                                    margin={{ left: 20, right: 20 }}
                                 >
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis type="number" />
                                     <YAxis
                                         dataKey="name"
                                         type="category"
-                                        width={100}
+                                        width={150}
+                                        tickFormatter={(value) =>
+                                            value.length > 20
+                                                ? `${value.substring(0, 20)}...`
+                                                : value
+                                        }
+                                        style={{ fontSize: '12px' }}
                                     />
                                     <Tooltip />
-                                    <Legend />
-                                    <Bar dataKey="done" fill="#10b981" />
-                                    <Bar dataKey="pending" fill="#f59e0b" />
+                                    <Legend
+                                        verticalAlign="bottom"
+                                        height={36}
+                                    />
+                                    <Bar
+                                        dataKey="done"
+                                        fill="#10b981"
+                                        radius={[0, 4, 4, 0]}
+                                    />
+                                    <Bar
+                                        dataKey="pending"
+                                        fill="#f59e0b"
+                                        radius={[0, 4, 4, 0]}
+                                    />
                                 </BarChart>
                             </ResponsiveContainer>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Today's Updates */}
+                {/* Today's Updates Table */}
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Today's Updates</CardTitle>
-                        <CardDescription>
-                            Latest activity updates from today
-                        </CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Today's Updates</CardTitle>
+                            <CardDescription>
+                                Latest activity updates from today
+                            </CardDescription>
+                        </div>
+                        <Button asChild variant="outline" size="sm">
+                            <Link href="/activities/history">View All</Link>
+                        </Button>
                     </CardHeader>
                     <CardContent>
                         {todayUpdates.length === 0 ? (
@@ -305,44 +338,62 @@ export default function Dashboard({
                                 </Button>
                             </div>
                         ) : (
-                            <div className="space-y-3">
-                                {todayUpdates.map((update) => (
-                                    <div
-                                        key={update.id}
-                                        className="flex flex-col gap-2 rounded-lg border p-4 md:flex-row md:items-start md:justify-between"
-                                    >
-                                        <div className="flex-1">
-                                            <p className="font-semibold">
-                                                {update.activity.title}
-                                            </p>
-                                            <p className="mt-1 text-xs text-muted-foreground">
-                                                {update.user.name} •{' '}
-                                                {new Intl.DateTimeFormat(
-                                                    'en-GB',
-                                                    {
-                                                        timeStyle: 'short',
-                                                    },
-                                                ).format(
-                                                    new Date(update.created_at),
-                                                )}
-                                            </p>
-                                            {update.remark && (
-                                                <p className="mt-2 text-sm text-foreground">
-                                                    {update.remark}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <Badge
-                                            variant={
-                                                update.status === 'done'
-                                                    ? 'default'
-                                                    : 'secondary'
-                                            }
-                                        >
-                                            {update.status}
-                                        </Badge>
-                                    </div>
-                                ))}
+                            <div className="overflow-hidden rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Activity</TableHead>
+                                            <TableHead>User</TableHead>
+                                            <TableHead>Time</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead className="max-w-[200px]">
+                                                Remark
+                                            </TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {todayUpdates.map((update) => (
+                                            <TableRow key={update.id}>
+                                                <TableCell className="font-medium">
+                                                    {update.activity.title}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <UserAvatar
+                                                            name={
+                                                                update.user.name
+                                                            }
+                                                            className="h-6 w-6"
+                                                        />
+                                                        <span className="text-sm">
+                                                            {update.user.name}
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">
+                                                    {new Intl.DateTimeFormat(
+                                                        'en-GB',
+                                                        {
+                                                            timeStyle: 'short',
+                                                        },
+                                                    ).format(
+                                                        new Date(
+                                                            update.created_at,
+                                                        ),
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <StatusBadge
+                                                        status={update.status}
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="max-w-[200px] truncate text-sm">
+                                                    {update.remark || '-'}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
                             </div>
                         )}
                     </CardContent>
