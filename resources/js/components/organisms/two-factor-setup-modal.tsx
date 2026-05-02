@@ -2,8 +2,8 @@ import { Form } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { Check, Copy, ScanLine } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import AlertError from '@/components/alert-error';
-import InputError from '@/components/input-error';
+import AlertError from '@/components/atoms/alert-error';
+import InputError from '@/components/atoms/input-error-inline';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -77,15 +77,13 @@ function TwoFactorSetupStep({
                             <div className="z-10 flex h-full w-full items-center justify-center p-5">
                                 {qrCodeSvg ? (
                                     <div
-                                        className="aspect-square w-full rounded-lg bg-white p-2 [&_svg]:size-full"
+                                        className={`aspect-square w-full rounded-lg bg-white p-2 [&_svg]:size-full ${
+                                            resolvedAppearance === 'dark'
+                                                ? '[&_svg]:brightness-150 [&_svg]:invert'
+                                                : ''
+                                        }`}
                                         dangerouslySetInnerHTML={{
                                             __html: qrCodeSvg,
-                                        }}
-                                        style={{
-                                            filter:
-                                                resolvedAppearance === 'dark'
-                                                    ? 'invert(1) brightness(1.5)'
-                                                    : undefined,
                                         }}
                                     />
                                 ) : (
@@ -120,10 +118,16 @@ function TwoFactorSetupStep({
                                         type="text"
                                         readOnly
                                         value={manualSetupKey}
+                                        title="Manual setup key"
+                                        placeholder="Manual setup key"
+                                        aria-label="Manual setup key"
                                         className="h-full w-full bg-background p-3 text-foreground outline-none"
                                     />
                                     <button
                                         onClick={() => copy(manualSetupKey)}
+                                        type="button"
+                                        title="Copy manual setup key"
+                                        aria-label="Copy manual setup key"
                                         className="border-l border-border px-3 hover:bg-muted"
                                     >
                                         <IconComponent className="w-4" />

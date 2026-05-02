@@ -1,7 +1,7 @@
 import type { ComponentPropsWithoutRef } from 'react';
 import { cn } from '@/lib/utils';
 
-export default function InputError({
+export default function InputErrorInline({
     message,
     className = '',
 }: ComponentPropsWithoutRef<'span'> & {

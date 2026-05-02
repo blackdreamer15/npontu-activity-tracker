@@ -1,7 +1,7 @@
 import { Form } from '@inertiajs/react';
 import { Eye, EyeOff, LockKeyhole, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import AlertError from '@/components/alert-error';
+import AlertError from '@/components/atoms/alert-error';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -101,7 +101,6 @@ export default function TwoFactorRecoveryCodes({
                 <div
                     id="recovery-codes-section"
                     className={`relative overflow-hidden transition-all duration-300 ${codesAreVisible ? 'h-auto opacity-100' : 'h-0 opacity-0'}`}
-                    aria-hidden={!codesAreVisible}
                 >
                     <div className="mt-3 space-y-3">
                         {errors?.length ? (
@@ -111,14 +110,12 @@ export default function TwoFactorRecoveryCodes({
                                 <div
                                     ref={codesSectionRef}
                                     className="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
-                                    role="list"
                                     aria-label="Recovery codes"
                                 >
                                     {recoveryCodesList.length ? (
                                         recoveryCodesList.map((code, index) => (
                                             <div
                                                 key={index}
-                                                role="listitem"
                                                 className="select-text"
                                             >
                                                 {code}

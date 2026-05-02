@@ -1,9 +1,9 @@
 import { Link } from '@inertiajs/react';
 import { BarChart3, Clock3, FolderGit2, LayoutGrid } from 'lucide-react';
-import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
-import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
+import AppLogo from '@/components/atoms/app-logo';
+import { NavFooter } from '@/components/organisms/nav-footer';
+import { NavMain } from '@/components/organisms/nav-main';
+import { NavUser } from '@/components/organisms/nav-user';
 import {
     Sidebar,
     SidebarContent,

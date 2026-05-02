@@ -68,7 +68,14 @@ export default function AppLogoIcon(props: SVGAttributes<SVGElement>) {
                 strokeLinecap="round"
             />
 
-            <circle cx="44" cy="44" r="8.5" fill="white" stroke="#2faa3f" strokeWidth="2.5" />
+            <circle
+                cx="44"
+                cy="44"
+                r="8.5"
+                fill="white"
+                stroke="#2faa3f"
+                strokeWidth="2.5"
+            />
             <path
                 d="M40.8 44.6v-1.8a3.2 3.2 0 0 1 6.4 0v1.8M40.2 44.6h7.6v5.2h-7.6z"
                 fill="none"
@@ -80,3 +87,4 @@ export default function AppLogoIcon(props: SVGAttributes<SVGElement>) {
         </svg>
     );
 }
+
