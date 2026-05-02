@@ -77,6 +77,8 @@ COPY public ./public
 COPY resources ./resources
 COPY routes ./routes
 COPY composer.json composer.lock ./
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 RUN mkdir -p storage/framework/{cache,sessions,testing,views} storage/logs bootstrap/cache \
     && chown -R appuser:app storage bootstrap/cache
@@ -86,4 +88,5 @@ USER appuser
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD php -r '$conn=@fsockopen("127.0.0.1", 8080); if (!$conn) { exit(1); } fclose($conn);'
 
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
