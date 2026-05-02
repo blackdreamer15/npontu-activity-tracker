@@ -23,4 +23,9 @@ class Activity extends Model
     {
         return $this->hasMany(ActivityUpdate::class)->latest();
     }
+
+    public function latestUpdate()
+    {
+        return $this->hasOne(ActivityUpdate::class)->latestOfMany();
+    }
 }
