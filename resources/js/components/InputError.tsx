@@ -1,4 +1,4 @@
-import { ComponentPropsWithoutRef } from 'react';
+import type { ComponentPropsWithoutRef } from 'react';
 import { cn } from '@/lib/utils';
 
 export default function InputError({
@@ -7,7 +7,9 @@ export default function InputError({
 }: ComponentPropsWithoutRef<'span'> & {
     message?: string;
 }) {
-    if (!message) return null;
+    if (!message) {
+        return null;
+    }
 
     return (
         <span className={cn('text-sm font-medium text-destructive', className)}>
