@@ -47,20 +47,17 @@ FROM php:8.4-cli-alpine AS runtime
 
 WORKDIR /var/www/html
 
-ENV COMPOSER_ALLOW_SUPERUSER=1 \
-    APP_ENV=production \
+ENV APP_ENV=production \
     APP_DEBUG=false
 
 RUN apk add --no-cache \
     libpq \
-    sqlite-libs \
     libzip \
     && apk add --no-cache --virtual .build-deps \
     $PHPIZE_DEPS \
     postgresql-dev \
-    sqlite-dev \
     libzip-dev \
-    && docker-php-ext-install pdo_pgsql pdo_sqlite zip \
+    && docker-php-ext-install pdo_pgsql zip \
     && apk del .build-deps
 
 RUN addgroup -g 10001 -S app \
